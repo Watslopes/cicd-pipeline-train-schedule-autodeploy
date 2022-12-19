@@ -17,7 +17,7 @@ node {
 	}
 
 	stage('Deploy') {
-		withCredentials([file(credentialsId: 'kubeconfig', variable: 'kubecfg')]){
+		withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]){
 		sh ("kubectl apply -f train-schedule-kube-canary.yml")
 		sh ("kubectl apply -f train-schedule-kube.yml")
 		}
