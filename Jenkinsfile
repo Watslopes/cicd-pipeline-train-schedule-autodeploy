@@ -18,8 +18,8 @@ node {
 
 	stage('Deploy') {
 		withCredentials([file(credentialsId: 'kubeconfig', variable: 'kubecfg')]){
-		sh ("kubectl --kubeconfig /home/centos/.kube/config apply -f train-schedule-kube-canary.yml")
-		sh ("kubectl --kubeconfig /home/centos/.kube/config apply -f train-schedule-kube.yml")
+		sh ("kubectl apply -f train-schedule-kube-canary.yml")
+		sh ("kubectl apply -f train-schedule-kube.yml")
 		}
 	}
 	
