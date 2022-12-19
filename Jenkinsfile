@@ -47,7 +47,8 @@ pipeline {
             }
             steps {
                 kubernetesDeploy(
-					sh ("kubectl apply -f train-schedule-kube-canary.yml")                )
+					sh ("kubectl apply -f train-schedule-kube-canary.yml")
+		)
             }
         }
         stage('DeployToProduction') {
