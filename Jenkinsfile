@@ -17,8 +17,8 @@ node {
 	}
 
 	stage('Deploy') {
-		sh ("kubectl --kubeconfig /home/centos/.kube/config apply -f train-schedule-kube-canary.yml")
-		sh ("kubectl --kubeconfig /home/centos/.kube/config apply -f train-schedule-kube.yml")
+		sh ("sudo kubectl --kubeconfig /home/centos/.kube/config apply -f train-schedule-kube-canary.yml")
+		sh ("sudo kubectl --kubeconfig /home/centos/.kube/config apply -f train-schedule-kube.yml")
 	}
 	
 	stage('Remove old images') {
