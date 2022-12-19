@@ -1,17 +1,20 @@
 pipeline {
     agent any
     environment {
-        //be sure to replace "bhavukm" with your own Docker Hub username 4
+        //be sure to replace "bhavukm" with your own Docker Hub username
         DOCKER_IMAGE_NAME = "watslopes2611/eduproj"
     }
-    stages {
-        stage('Build') {
-            steps {
-                echo 'Running build automation'
-                sh './gradlew build --no-daemon'
-                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
-            }
-        }
+    //stages {
+    //    stage('Build') {
+    //        steps {
+    //           echo 'Running build automation'
+    //            sh './gradlew build --no-daemon'
+    //           archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+    //        }
+    //    }
+	stage('Clone repository') {
+		checkout scm
+	}
         stage('Build Docker Image') {
             when {
                 branch 'master'
@@ -47,8 +50,7 @@ pipeline {
             }
             steps {
                 kubernetesDeploy(
-					sh ("kubectl apply -f train-schedule-kube-canary.yml")
-		)
+					sh ("kubectl apply -f train-schedule-kube-canary.yml")                )
             }
         }
         stage('DeployToProduction') {
