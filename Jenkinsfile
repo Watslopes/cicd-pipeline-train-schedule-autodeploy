@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        //be sure to replace "bhavukm" with your own Docker Hub username 3
+        //be sure to replace "bhavukm" with your own Docker Hub username 4
         DOCKER_IMAGE_NAME = "watslopes2611/eduproj"
     }
     stages {
