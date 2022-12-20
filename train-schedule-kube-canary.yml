@@ -1,49 +1,79 @@
-kind: Service
-apiVersion: v1
-metadata:
-  name: train-schedule-service-canary
-spec:
-  type: NodePort
-  selector:
-    app: train-schedule
-    track: canary
-  ports:
-  - protocol: TCP
-    port: 30000
-    nodePort: 30001
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: train-schedule-deployment-canary
-  labels:
-    app: train-schedule
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: train-schedule
-      track: canary
-  template:
-    metadata:
-      labels:
-        app: train-schedule
-        track: canary
-    spec:
-      containers:
-      - name: train-schedule
-        image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER
-        ports:
-        - containerPort: 30003
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 30002
-          initialDelaySeconds: 15
-          timeoutSeconds: 1
-          periodSeconds: 10
-        resources:
-          requests:
-            cpu: 200m
+pipeline {
+    agent any
+    environment {
+        //be sure to replace "bhavukm" with your own Docker Hub username
+        DOCKER_IMAGE_NAME = "watslopes2611/eduproj"
+    }
+    stages {
+        stage('Build') {
+            steps {
+               echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+               archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
+        }		
+        stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                    app.inside {
+                        sh 'echo Hello, World!'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    withDockerRegistry([ credentialsId: "dockerHub", url: "" ]) {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1
+            }
+            steps {
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
